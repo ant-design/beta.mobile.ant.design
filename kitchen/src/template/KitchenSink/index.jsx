@@ -29,11 +29,42 @@ export default class App extends React.Component {
       open: false,
       appLocale,
       cateOpend: [false, false, false, false, false, false, false],
+      ...this.getStateCache(),
     };
   }
 
-  onOpenChange = () => {
-    this.setState({ open: !this.state.open });
+  componentDidMount() {
+    if (window.parent && window.parent.postMessage) {
+      window.parent.postMessage('kitchen_loaded', '/');
+    }
+  }
+
+  getStateCache = () => {
+    try {
+      return JSON.parse(localStorage.getItem('_mobile-index-state'));
+    } catch (error) {
+      console.warn('state cache get error:', error);
+    }
+    return {};
+  }
+
+  setStateCache = (data) => {
+    try {
+      localStorage.setItem('_mobile-index-state', JSON.stringify({
+        ...data,
+      }));
+    } catch (error) {
+      console.warn('state cache set error:', error);
+    }
+  }
+
+  onOpenChange = (index) => {
+    const { cateOpend } = this.state;
+    cateOpend[index] = !cateOpend[index];
+    this.setState({ cateOpend }, () => {
+      const { appLocale, ...data } = this.state;
+      this.setStateCache(data);
+    });
   }
 
   addSearch = () => {
@@ -92,11 +123,7 @@ export default class App extends React.Component {
                     key={`${cate}-${index}`}
                     renderHeader={() => (
                       <div
-                        onClick={() => {
-                          const { cateOpend } = this.state;
-                          cateOpend[index] = !cateOpend[index];
-                          this.setState({ cateOpend });
-                        }}
+                        onClick={() => this.onOpenChange(index)}
                         className="am-demo-category"
                       >
                         <div className="am-demo-category-name">{appLocale.locale === 'en-US' ? cate : `${config.cateChinese[cate]} ${cate}`}</div>
@@ -114,8 +141,7 @@ export default class App extends React.Component {
                               arrow="horizontal"
                               key={`${j.filename}-${cate}`}
                               onClick={() => location.href = `${rootPath}/${paths[1]}${this.addSearch()}#${
-                                paths[1] + config.hashSpliter + j.order
-                              }`}
+                                paths[1] + config.hashSpliter + j.order}`}
                             >
                               {`${item.title} ${appLocale.locale === 'zh-CN' ? item.subtitle : ''}-${j.title[appLocale.locale]}`}
                             </List.Item>
