@@ -25,3 +25,4 @@ yarn.lock
 npm-debug.log*
 package-lock.json
 rn-kitchen-sink/
+.cdnkey
